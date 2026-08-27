@@ -724,8 +724,8 @@
             <div class="fw-bold text-truncate" title="${d.title}">${d.title}</div>
             <div class="text-muted small mb-3">${d.created_at}</div>
             <div class="d-flex gap-1">
-              <a href="/uploads/${d.file_path}" target="_blank" class="btn btn-outline-secondary btn-sm flex-fill">เปิดดู</a>
-              <a href="/uploads/${d.file_path}" download="${d.title}" class="btn btn-outline-primary btn-sm px-2" title="ดาวน์โหลด"><i class="bi bi-download"></i></a>
+              <a href="${d.file_path}" target="_blank" class="btn btn-outline-secondary btn-sm flex-fill">เปิดดู</a>
+              <a href="${d.file_path}" target="_blank" download="${d.title}" class="btn btn-outline-primary btn-sm px-2" title="ดาวน์โหลด"><i class="bi bi-download"></i></a>
               <button class="btn btn-outline-danger btn-sm px-2" onclick="triggerDeleteDoc(${d.id})" title="ลบไฟล์"><i class="bi bi-trash"></i></button>
             </div>
           </div>
