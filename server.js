@@ -1,167 +1,155 @@
 const express = require('express');
+const cors = require('cors');
 const multer = require('multer');
 const path = require('path');
-const fs = require('fs');
-const db = require('./database');
+const { createClient } = require('@supabase/supabase-js');
 
 const app = express();
-const PORT = 3000;
+const PORT = process.env.PORT || 3000;
 
+// ใส่ค่า URL และ Secret Key ของ Supabase
+const SUPABASE_URL = process.env.SUPABASE_URL || 'https://mlraapeailbefpzqyzil.supabase.co';
+const SUPABASE_KEY = process.env.SUPABASE_KEY || 'sb_secret_mC1mCurA1ZA1mn3o-F1HpA_8O9KCAlZ';
+const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
+
+app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(express.static('public'));
-app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
-const uploadDir = path.join(__dirname, 'uploads');
-if (!fs.existsSync(uploadDir)) fs.mkdirSync(uploadDir);
-
-const storage = multer.diskStorage({
-  destination: (req, file, cb) => cb(null, 'uploads/'),
-  filename: (req, file, cb) => cb(null, Date.now() + '-' + file.originalname)
-});
-const upload = multer({ storage });
+const upload = multer({ storage: multer.memoryStorage() });
 
 // --- Auth API ---
-app.post('/api/login', (req, res) => {
+app.post('/api/login', async (req, res) => {
   const { username, password } = req.body;
-  db.get('SELECT id, username, fullname FROM users WHERE username = ? AND password = ?', [username, password], (err, user) => {
-    if (err) return res.status(500).json({ error: err.message });
-    if (!user) return res.status(401).json({ error: 'ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง' });
-    res.json({ success: true, user });
-  });
+  const { data, error } = await supabase.from('users').select('*').eq('username', username).eq('password', password).maybeSingle();
+  if (error || !data) return res.status(401).json({ error: 'ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง' });
+  res.json({ success: true, user: data });
 });
 
 // --- Appointments API ---
-app.get('/api/appointments', (req, res) => {
-  db.all('SELECT * FROM appointments ORDER BY appoint_date ASC', [], (err, rows) => {
-    if (err) return res.status(500).json({ error: err.message });
-    res.json(rows || []);
-  });
+app.get('/api/appointments', async (req, res) => {
+  const { data, error } = await supabase.from('appointments').select('*').order('appoint_date', { ascending: true });
+  if (error) return res.status(500).json({ error: error.message });
+  res.json(data || []);
 });
 
-app.post('/api/appointments', (req, res) => {
+app.post('/api/appointments', async (req, res) => {
   const { title, appoint_date, appoint_type } = req.body;
-  const sql = 'INSERT INTO appointments (title, appoint_date, appoint_type) VALUES (?, ?, ?)';
-  db.run(sql, [title, appoint_date, appoint_type], function(err) {
-    if (err) return res.status(500).json({ error: err.message });
-    res.json({ id: this.lastID, success: true });
-  });
+  const { data, error } = await supabase.from('appointments').insert([{ title, appoint_date, appoint_type }]).select();
+  if (error) return res.status(500).json({ error: error.message });
+  res.json({ id: data[0].id, success: true });
 });
 
-app.put('/api/appointments/:id', (req, res) => {
+app.put('/api/appointments/:id', async (req, res) => {
   const { title, appoint_date, appoint_type } = req.body;
-  const sql = 'UPDATE appointments SET title = ?, appoint_date = ?, appoint_type = ? WHERE id = ?';
-  db.run(sql, [title, appoint_date, appoint_type, req.params.id], function(err) {
-    if (err) return res.status(500).json({ error: err.message });
-    res.json({ success: true, changes: this.changes });
-  });
+  const { error } = await supabase.from('appointments').update({ title, appoint_date, appoint_type }).eq('id', req.params.id);
+  if (error) return res.status(500).json({ error: error.message });
+  res.json({ success: true });
 });
 
-app.delete('/api/appointments/:id', (req, res) => {
-  db.run('DELETE FROM appointments WHERE id = ?', [req.params.id], function(err) {
-    if (err) return res.status(500).json({ error: err.message });
-    res.json({ success: true, changes: this.changes });
-  });
+app.delete('/api/appointments/:id', async (req, res) => {
+  const { error } = await supabase.from('appointments').delete().eq('id', req.params.id);
+  if (error) return res.status(500).json({ error: error.message });
+  res.json({ success: true });
 });
 
 // --- Cases API ---
-app.get('/api/cases', (req, res) => {
-  db.all('SELECT * FROM cases ORDER BY id DESC', [], (err, rows) => {
-    if (err) return res.status(500).json({ error: err.message });
-    res.json(rows || []);
-  });
+app.get('/api/cases', async (req, res) => {
+  const { data, error } = await supabase.from('cases').select('*').order('id', { ascending: false });
+  if (error) return res.status(500).json({ error: error.message });
+  res.json(data || []);
 });
 
-app.post('/api/cases', (req, res) => {
+app.post('/api/cases', async (req, res) => {
   const { category, black_number, red_number, court_name, lawyer_name, case_type, claim_amount } = req.body;
-  db.run('INSERT INTO cases (category, black_number, red_number, court_name, lawyer_name, case_type, claim_amount) VALUES (?, ?, ?, ?, ?, ?, ?)',
-    [category || 'คดีแพ่ง', black_number, red_number, court_name, lawyer_name, case_type, claim_amount], function(err) {
-      if (err) return res.status(500).json({ error: err.message });
-      res.json({ id: this.lastID });
-    });
+  const { data, error } = await supabase.from('cases').insert([{
+    category: category || 'คดีแพ่ง', black_number, red_number, court_name, lawyer_name, case_type, claim_amount: Number(claim_amount) || 0
+  }]).select();
+  if (error) return res.status(500).json({ error: error.message });
+  res.json({ id: data[0].id });
 });
 
-app.put('/api/cases/:id', (req, res) => {
+app.put('/api/cases/:id', async (req, res) => {
   const { category, black_number, red_number, court_name, lawyer_name, case_type, claim_amount } = req.body;
-  const sql = `UPDATE cases SET category = ?, black_number = ?, red_number = ?, court_name = ?, lawyer_name = ?, case_type = ?, claim_amount = ? WHERE id = ?`;
-  db.run(sql, [category || 'คดีแพ่ง', black_number, red_number, court_name, lawyer_name, case_type, claim_amount, req.params.id], function(err) {
-    if (err) return res.status(500).json({ error: err.message });
-    res.json({ success: true, changes: this.changes });
-  });
+  const { error } = await supabase.from('cases').update({
+    category: category || 'คดีแพ่ง', black_number, red_number, court_name, lawyer_name, case_type, claim_amount: Number(claim_amount) || 0
+  }).eq('id', req.params.id);
+  if (error) return res.status(500).json({ error: error.message });
+  res.json({ success: true });
 });
 
-app.delete('/api/cases/:id', (req, res) => {
-  db.run('DELETE FROM cases WHERE id = ?', [req.params.id], function(err) {
-    if (err) return res.status(500).json({ error: err.message });
-    res.json({ success: true, changes: this.changes });
-  });
+app.delete('/api/cases/:id', async (req, res) => {
+  const { error } = await supabase.from('cases').delete().eq('id', req.params.id);
+  if (error) return res.status(500).json({ error: error.message });
+  res.json({ success: true });
 });
 
 // --- Clients API ---
-app.get('/api/clients', (req, res) => {
-  const { party_type } = req.query;
-  const sql = party_type ? 'SELECT * FROM clients WHERE party_type = ? ORDER BY id DESC' : 'SELECT * FROM clients ORDER BY id DESC';
-  db.all(sql, party_type ? [party_type] : [], (err, rows) => {
-    if (err) return res.status(500).json({ error: err.message });
-    res.json(rows || []);
-  });
+app.get('/api/clients', async (req, res) => {
+  let query = supabase.from('clients').select('*').order('id', { ascending: false });
+  if (req.query.party_type) query = query.eq('party_type', req.query.party_type);
+  const { data, error } = await query;
+  if (error) return res.status(500).json({ error: error.message });
+  res.json(data || []);
 });
 
-app.post('/api/clients', (req, res) => {
+app.post('/api/clients', async (req, res) => {
   const { name, client_type, party_type, phone, tax_id, address } = req.body;
-  db.run('INSERT INTO clients (name, client_type, party_type, phone, tax_id, address) VALUES (?, ?, ?, ?, ?, ?)',
-    [name, client_type, party_type, phone, tax_id, address], function(err) {
-      if (err) return res.status(500).json({ error: err.message });
-      res.json({ id: this.lastID });
-    });
+  const { data, error } = await supabase.from('clients').insert([{ name, client_type, party_type, phone, tax_id, address }]).select();
+  if (error) return res.status(500).json({ error: error.message });
+  res.json({ id: data[0].id });
 });
 
-app.put('/api/clients/:id', (req, res) => {
+app.put('/api/clients/:id', async (req, res) => {
   const { name, client_type, phone, tax_id, address } = req.body;
-  const sql = 'UPDATE clients SET name = ?, client_type = ?, phone = ?, tax_id = ?, address = ? WHERE id = ?';
-  db.run(sql, [name, client_type, phone, tax_id, address, req.params.id], function(err) {
-    if (err) return res.status(500).json({ error: err.message });
-    res.json({ success: true, changes: this.changes });
-  });
+  const { error } = await supabase.from('clients').update({ name, client_type, phone, tax_id, address }).eq('id', req.params.id);
+  if (error) return res.status(500).json({ error: error.message });
+  res.json({ success: true });
 });
 
-app.delete('/api/clients/:id', (req, res) => {
-  db.run('DELETE FROM clients WHERE id = ?', [req.params.id], function(err) {
-    if (err) return res.status(500).json({ error: err.message });
-    res.json({ success: true, changes: this.changes });
-  });
+app.delete('/api/clients/:id', async (req, res) => {
+  const { error } = await supabase.from('clients').delete().eq('id', req.params.id);
+  if (error) return res.status(500).json({ error: error.message });
+  res.json({ success: true });
 });
 
-// --- Documents API ---
-app.get('/api/documents', (req, res) => {
-  db.all('SELECT * FROM documents ORDER BY id DESC', [], (err, rows) => {
-    if (err) return res.status(500).json({ error: err.message });
-    res.json(rows || []);
-  });
+// --- Documents API (Storage) ---
+app.get('/api/documents', async (req, res) => {
+  const { data, error } = await supabase.from('documents').select('*').order('id', { ascending: false });
+  if (error) return res.status(500).json({ error: error.message });
+  res.json(data || []);
 });
 
-app.post('/api/documents', upload.single('file'), (req, res) => {
+app.post('/api/documents', upload.single('file'), async (req, res) => {
   if (!req.file) return res.status(400).send('No file uploaded.');
-  const ext = path.extname(req.file.originalname).replace('.', '').toUpperCase();
-  db.run('INSERT INTO documents (title, file_path, file_type) VALUES (?, ?, ?)',
-    [req.body.title || req.file.originalname, req.file.filename, ext], function(err) {
-      if (err) return res.status(500).json({ error: err.message });
-      res.json({ id: this.lastID });
-    });
+  const fileExt = path.extname(req.file.originalname).replace('.', '').toUpperCase();
+  const fileName = `${Date.now()}-${Buffer.from(req.file.originalname, 'latin1').toString('utf8')}`;
+
+  const { error: uploadErr } = await supabase.storage.from('documents').upload(fileName, req.file.buffer, { contentType: req.file.mimetype });
+  if (uploadErr) return res.status(500).json({ error: uploadErr.message });
+
+  const { data: publicUrlData } = supabase.storage.from('documents').getPublicUrl(fileName);
+
+  const { data, error: dbErr } = await supabase.from('documents').insert([{
+    title: req.body.title || req.file.originalname,
+    file_path: publicUrlData.publicUrl,
+    file_type: fileExt
+  }]).select();
+
+  if (dbErr) return res.status(500).json({ error: dbErr.message });
+  res.json({ id: data[0].id });
 });
 
-app.delete('/api/documents/:id', (req, res) => {
-  db.get('SELECT file_path FROM documents WHERE id = ?', [req.params.id], (err, row) => {
-    if (err) return res.status(500).json({ error: err.message });
-    if (row && row.file_path) {
-      const filePath = path.join(__dirname, 'uploads', row.file_path);
-      if (fs.existsSync(filePath)) fs.unlinkSync(filePath);
-    }
-    db.run('DELETE FROM documents WHERE id = ?', [req.params.id], function(err) {
-      if (err) return res.status(500).json({ error: err.message });
-      res.json({ success: true, changes: this.changes });
-    });
-  });
+app.delete('/api/documents/:id', async (req, res) => {
+  const { data: doc } = await supabase.from('documents').select('file_path').eq('id', req.params.id).maybeSingle();
+  if (doc && doc.file_path) {
+    const fileName = doc.file_path.split('/').pop();
+    await supabase.storage.from('documents').remove([fileName]);
+  }
+  const { error } = await supabase.from('documents').delete().eq('id', req.params.id);
+  if (error) return res.status(500).json({ error: error.message });
+  res.json({ success: true });
 });
 
-app.listen(PORT, () => console.log(`SmartLaw System running at http://localhost:${PORT}`));
+app.listen(PORT, () => console.log(`SmartLaw System running on port ${PORT}`));
