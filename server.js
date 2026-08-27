@@ -18,6 +18,13 @@ app.use(express.static('public'));
 
 const upload = multer({ storage: multer.memoryStorage() });
 
+// --- Appointments API (Delete) ---
+app.delete('/api/appointments/:id', async (req, res) => {
+  const { error } = await supabase.from('appointments').delete().eq('id', req.params.id);
+  if (error) return res.status(500).json({ error: error.message });
+  res.json({ success: true });
+});
+
 // --- Auth API ---
 app.post('/api/login', async (req, res) => {
   const { username, password } = req.body;
