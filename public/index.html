@@ -78,7 +78,7 @@
             <div class="d-flex flex-wrap gap-1">
               <button class="btn btn-primary btn-sm" onclick="openScheduleModal('วันนัด')">+ เพิ่มวันนัด</button>
               <button class="btn btn-dark btn-sm" onclick="openScheduleModal('วันนัดไต่สวน')">+ เพิ่มวันนัดไต่สวน</button>
-              <button class="btn btn-dark btn-sm" onclick="openScheduleModal('นัดไกล่เกลี่ย')">+ เพิ่มวันนัดไกล่เกลี่ย</button>
+              <button class="btn btn-dark btn-sm" onclick="openScheduleModal('วันนัดไกล่เกลี่ย')">+ เพิ่มวันนัดไกล่เกลี่ย</button>
               <button class="btn btn-dark btn-sm" onclick="openScheduleModal('วันนัดฟังคำสั่ง')">+ เพิ่มวันนัดฟังคำสั่ง</button>
               <button class="btn btn-dark btn-sm" onclick="openScheduleModal('วันสืบพยานโจทก์')">+ เพิ่มวันสืบพยานโจทก์</button>
               <button class="btn btn-dark btn-sm" onclick="openScheduleModal('วันสืบพยานจำเลย')">+ เพิ่มวันสืบพยานจำเลย</button>
@@ -91,10 +91,11 @@
             <table class="table table-bordered text-center align-middle">
               <thead class="table-secondary">
                 <tr>
-                  <th style="width: 20%;">วันที่นัด</th>
-                  <th style="width: 15%;">ประเภทนัด</th>
-                  <th style="width: 45%;">รายการ / เรื่อง</th>
-                  <th style="width: 20%;">จัดการ</th>
+                  <th style="width: 15%;">วันที่นัด</th>
+                  <th style="width: 10%;">เวลา</th>
+                  <th style="width: 18%;">ประเภทนัด</th>
+                  <th style="width: 42%;">รายการ / เรื่อง</th>
+                  <th style="width: 15%;">จัดการ</th>
                 </tr>
               </thead>
               <tbody id="scheduleList"></tbody>
@@ -253,9 +254,15 @@
                 <option value="วันฎีกา">วันฎีกา</option>
               </select>
             </div>
-            <div class="mb-3">
-              <label class="form-label small">วันที่นัดหมาย</label>
-              <input type="date" id="appoint_date" class="form-control" required>
+            <div class="row">
+              <div class="col-md-7 mb-3">
+                <label class="form-label small">วันที่นัดหมาย</label>
+                <input type="date" id="appoint_date" class="form-control" required>
+              </div>
+              <div class="col-md-5 mb-3">
+                <label class="form-label small">เวลานัดหมาย</label>
+                <input type="time" id="appoint_time" class="form-control" value="09:00" required>
+              </div>
             </div>
             <div class="mb-3">
               <label class="form-label small">รายละเอียด / เรื่อง / ศาล</label>
@@ -437,6 +444,7 @@
       document.getElementById('appoint_type').value = type;
       document.getElementById('modalScheduleTitle').innerText = `เพิ่ม (${type})`;
       document.getElementById('appoint_date').value = new Date().toISOString().slice(0, 10);
+      document.getElementById('appoint_time').value = '09:00';
       document.getElementById('appoint_desc').value = '';
       scheduleModal.show();
     }
@@ -447,6 +455,7 @@
       document.getElementById('appoint_id').value = item.id;
       document.getElementById('appoint_type').value = item.appoint_type;
       document.getElementById('appoint_date').value = item.appoint_date;
+      document.getElementById('appoint_time').value = item.appoint_time || '09:00';
       document.getElementById('appoint_desc').value = item.title;
       document.getElementById('modalScheduleTitle').innerText = 'แก้ไขวันนัดหมาย';
       scheduleModal.show();
@@ -465,13 +474,14 @@
         scheduleDataList = await res.json();
         const tbody = document.getElementById('scheduleList');
         if (!scheduleDataList || scheduleDataList.length === 0) {
-          tbody.innerHTML = '<tr><td colspan="4" class="text-muted p-4">ยังไม่มีรายการนัดหมาย</td></tr>';
+          tbody.innerHTML = '<tr><td colspan="5" class="text-muted p-4">ยังไม่มีรายการนัดหมาย</td></tr>';
           return;
         }
 
         tbody.innerHTML = scheduleDataList.map(d => `
           <tr>
             <td class="fw-bold">${d.appoint_date}</td>
+            <td><span class="badge bg-light text-dark border">${d.appoint_time || '-'} น.</span></td>
             <td><span class="badge ${d.appoint_type === 'วันนัด' ? 'bg-primary' : 'bg-dark'}">${d.appoint_type}</span></td>
             <td class="text-start">${d.title}</td>
             <td>
@@ -491,6 +501,7 @@
       const payload = {
         title: document.getElementById('appoint_desc').value,
         appoint_date: document.getElementById('appoint_date').value,
+        appoint_time: document.getElementById('appoint_time').value,
         appoint_type: document.getElementById('appoint_type').value
       };
 
