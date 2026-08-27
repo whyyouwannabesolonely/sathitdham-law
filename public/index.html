@@ -70,9 +70,14 @@
           <div class="d-flex justify-content-between align-items-center mb-4">
             <h4 class="m-0">ตารางนัดประจำเดือน</h4>
             <div>
+              <div class="d-flex flex-wrap gap-1">
               <button class="btn btn-primary btn-sm" onclick="openScheduleModal('วันนัด')">+ เพิ่มวันนัด</button>
+              <button class="btn btn-info btn-sm text-white" onclick="openScheduleModal('วันสืบพยานโจทก์')">+ เพิ่มวันสืบพยานโจทก์</button>
+              <button class="btn btn-warning btn-sm text-dark" onclick="openScheduleModal('วันสืบพยานจำเลย')">+ เพิ่มวันสืบพยานจำเลย</button>
+              <button class="btn btn-danger btn-sm" onclick="openScheduleModal('วันฟังคำพิพากษา')">+ เพิ่มวันฟังคำพิพากษา</button>
               <button class="btn btn-dark btn-sm" onclick="openScheduleModal('วันอุทธรณ์')">+ เพิ่มวันอุทธรณ์</button>
               <button class="btn btn-dark btn-sm" onclick="openScheduleModal('วันฎีกา')">+ เพิ่มวันฎีกา</button>
+            </div>
             </div>
           </div>
           <div class="card p-3 shadow-sm border-0">
@@ -153,11 +158,14 @@
             <div class="mb-3">
               <label class="form-label small">ประเภทนัด</label>
               <select id="appoint_type" class="form-select" required>
-                <option value="วันนัด">วันนัด</option>
-                <option value="วันอุทธรณ์">วันอุทธรณ์</option>
-                <option value="วันฎีกา">วันฎีกา</option>
-              </select>
-            </div>
+              <option value="วันนัด">วันนัด</option>
+              <option value="วันสืบพยานโจทก์">วันสืบพยานโจทก์</option>
+              <option value="วันสืบพยานจำเลย">วันสืบพยานจำเลย</option>
+              <option value="วันฟังคำพิพากษา">วันฟังคำพิพากษา</option>
+              <option value="วันอุทธรณ์">วันอุทธรณ์</option>
+              <option value="วันฎีกา">วันฎีกา</option>
+            </select>
+          </div>
             <div class="mb-3">
               <label class="form-label small">วันที่นัดหมาย</label>
               <input type="date" id="appoint_date" class="form-control" required>
@@ -368,7 +376,14 @@
         tbody.innerHTML = scheduleDataList.map(d => `
           <tr>
             <td class="fw-bold">${d.appoint_date}</td>
-            <td><span class="badge ${d.appoint_type === 'วันนัด' ? 'bg-primary' : 'bg-dark'}">${d.appoint_type}</span></td>
+            <td>
+            <span class="badge ${
+            d.appoint_type === 'วันนัด' ? 'bg-primary' :
+            d.appoint_type === 'วันสืบพยานโจทก์' ? 'bg-info text-white' :
+            d.appoint_type === 'วันสืบพยานจำเลย' ? 'bg-warning text-dark' :
+            d.appoint_type === 'วันฟังคำพิพากษา' ? 'bg-danger' : 'bg-dark'
+            }">${d.appoint_type}</span>
+            </td>
             <td class="text-start">${d.title}</td>
             <td>
               <button class="btn btn-outline-warning btn-sm me-1" onclick="editSchedule(${d.id})"><i class="bi bi-pencil-square"></i> แก้ไข</button>
