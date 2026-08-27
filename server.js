@@ -8,7 +8,7 @@ const app = express();
 const PORT = process.env.PORT || 3000;
 
 const SUPABASE_URL = process.env.SUPABASE_URL || 'https://mlraapeailbefpzqyzil.supabase.co';
-const SUPABASE_KEY = process.env.SUPABASE_KEY || 'sb_publishable_g5RElnP2cNZE63gUuC_Ocw_rVpHrrfP';
+const SUPABASE_KEY = process.env.SUPABASE_KEY || 'sb_secret_d7aH4i8jVe-W53fKYcwUZw_34-q0L5i';
 const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
 
 app.use(cors());
