@@ -7,9 +7,8 @@ const { createClient } = require('@supabase/supabase-js');
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-// ใส่ค่า URL และ Secret Key ของ Supabase
 const SUPABASE_URL = process.env.SUPABASE_URL || 'https://mlraapeailbefpzqyzil.supabase.co';
-const SUPABASE_KEY = process.env.SUPABASE_KEY || 'sb_secret_mC1mCurA1ZA1mn3o-F1HpA_8O9KCAlZ';
+const SUPABASE_KEY = process.env.SUPABASE_KEY || 'sb_publishable_g5RElnP2cNZE63gUuC_Ocw_rVpHrrfP';
 const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
 
 app.use(cors());
