@@ -536,6 +536,34 @@
       deleteModal.show();
     }
 
+    document.getElementById('confirmDeleteBtn').onclick = async () => {
+      try {
+        if (deleteTargetId) {
+          const res = await fetch(`/api/appointments/${deleteTargetId}`, { method: 'DELETE' });
+          if (!res.ok) throw new Error('Delete failed');
+          await loadSchedules();
+        } else if (deleteCaseTargetId) {
+          const res = await fetch(`/api/cases/${deleteCaseTargetId}`, { method: 'DELETE' });
+          if (!res.ok) throw new Error('Delete failed');
+          await loadCases();
+        } else if (deleteClientTargetId) {
+          const res = await fetch(`/api/clients/${deleteClientTargetId}`, { method: 'DELETE' });
+          if (!res.ok) throw new Error('Delete failed');
+          await loadClients(currentPartyType);
+        } else if (deleteDocTargetId) {
+          const res = await fetch(`/api/documents/${deleteDocTargetId}`, { method: 'DELETE' });
+          if (!res.ok) throw new Error('Delete failed');
+          await loadDocuments();
+        }
+      } catch (err) {
+        console.error('Delete Error:', err);
+        alert('เกิดข้อผิดพลาดในการลบข้อมูล กรุณาลองใหม่อีกครั้ง');
+      } finally {
+        clearDeleteTargets();
+        deleteModal.hide();
+      }
+    };
+
     async function loadSchedules() {
       try {
         const res = await fetch('/api/appointments');
