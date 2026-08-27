@@ -88,18 +88,23 @@
             </div>
           </div>
           <div class="card p-3 shadow-sm border-0">
-            <table class="table table-bordered text-center align-middle">
-              <thead class="table-secondary">
-                <tr>
-                  <th style="width: 15%;">วันที่นัด</th>
-                  <th style="width: 10%;">เวลา</th>
-                  <th style="width: 18%;">ประเภทนัด</th>
-                  <th style="width: 42%;">รายการ / เรื่อง</th>
-                  <th style="width: 15%;">จัดการ</th>
-                </tr>
-              </thead>
-              <tbody id="scheduleList"></tbody>
-            </table>
+            <div class="table-responsive">
+              <table class="table table-bordered text-center align-middle mb-0">
+                <thead class="table-secondary">
+                  <tr>
+                    <th style="width: 12%;">วันที่นัด</th>
+                    <th style="width: 8%;">เวลา</th>
+                    <th style="width: 13%;">ประเภทนัด</th>
+                    <th style="width: 11%;">คดีดำ</th>
+                    <th style="width: 11%;">คดีแดง</th>
+                    <th style="width: 14%;">ศาล</th>
+                    <th style="width: 21%;">รายการ / เรื่อง</th>
+                    <th style="width: 10%;">จัดการ</th>
+                  </tr>
+                </thead>
+                <tbody id="scheduleList"></tbody>
+              </table>
+            </div>
           </div>
         </div>
 
@@ -264,9 +269,23 @@
                 <input type="time" id="appoint_time" class="form-control" value="09:00" required>
               </div>
             </div>
+            <div class="row">
+              <div class="col-md-4 mb-3">
+                <label class="form-label small">หมายเลขคดีดำ</label>
+                <input type="text" id="appoint_black_num" class="form-control" placeholder="เช่น อ3834/2565">
+              </div>
+              <div class="col-md-4 mb-3">
+                <label class="form-label small">หมายเลขคดีแดง</label>
+                <input type="text" id="appoint_red_num" class="form-control" placeholder="เช่น อ123/2566">
+              </div>
+              <div class="col-md-4 mb-3">
+                <label class="form-label small">ศาล</label>
+                <input type="text" id="appoint_court_name" class="form-control" placeholder="เช่น ศาลแพ่ง">
+              </div>
+            </div>
             <div class="mb-3">
-              <label class="form-label small">รายละเอียด / เรื่อง / ศาล</label>
-              <textarea id="appoint_desc" class="form-control" rows="3" required></textarea>
+              <label class="form-label small">รายละเอียด / เรื่อง</label>
+              <textarea id="appoint_desc" class="form-control" rows="2" required></textarea>
             </div>
             <button type="submit" class="btn btn-primary w-100">บันทึกข้อมูล</button>
           </form>
@@ -445,6 +464,9 @@
       document.getElementById('modalScheduleTitle').innerText = `เพิ่ม (${type})`;
       document.getElementById('appoint_date').value = new Date().toISOString().slice(0, 10);
       document.getElementById('appoint_time').value = '09:00';
+      document.getElementById('appoint_black_num').value = '';
+      document.getElementById('appoint_red_num').value = '';
+      document.getElementById('appoint_court_name').value = '';
       document.getElementById('appoint_desc').value = '';
       scheduleModal.show();
     }
@@ -456,6 +478,9 @@
       document.getElementById('appoint_type').value = item.appoint_type;
       document.getElementById('appoint_date').value = item.appoint_date;
       document.getElementById('appoint_time').value = item.appoint_time || '09:00';
+      document.getElementById('appoint_black_num').value = item.black_number || '';
+      document.getElementById('appoint_red_num').value = item.red_number || '';
+      document.getElementById('appoint_court_name').value = item.court_name || '';
       document.getElementById('appoint_desc').value = item.title;
       document.getElementById('modalScheduleTitle').innerText = 'แก้ไขวันนัดหมาย';
       scheduleModal.show();
@@ -474,7 +499,7 @@
         scheduleDataList = await res.json();
         const tbody = document.getElementById('scheduleList');
         if (!scheduleDataList || scheduleDataList.length === 0) {
-          tbody.innerHTML = '<tr><td colspan="5" class="text-muted p-4">ยังไม่มีรายการนัดหมาย</td></tr>';
+          tbody.innerHTML = '<tr><td colspan="8" class="text-muted p-4">ยังไม่มีรายการนัดหมาย</td></tr>';
           return;
         }
 
@@ -483,10 +508,13 @@
             <td class="fw-bold">${d.appoint_date}</td>
             <td><span class="badge bg-light text-dark border">${d.appoint_time || '-'} น.</span></td>
             <td><span class="badge ${d.appoint_type === 'วันนัด' ? 'bg-primary' : 'bg-dark'}">${d.appoint_type}</span></td>
+            <td class="fw-bold text-dark">${d.black_number || '-'}</td>
+            <td class="fw-bold text-danger">${d.red_number || '-'}</td>
+            <td>${d.court_name || '-'}</td>
             <td class="text-start">${d.title}</td>
             <td>
-              <button class="btn btn-outline-warning btn-sm me-1" onclick="editSchedule(${d.id})"><i class="bi bi-pencil-square"></i> แก้ไข</button>
-              <button class="btn btn-outline-danger btn-sm" onclick="triggerDelete(${d.id})"><i class="bi bi-trash"></i> ลบ</button>
+              <button class="btn btn-outline-warning btn-sm me-1" onclick="editSchedule(${d.id})"><i class="bi bi-pencil-square"></i></button>
+              <button class="btn btn-outline-danger btn-sm" onclick="triggerDelete(${d.id})"><i class="bi bi-trash"></i></button>
             </td>
           </tr>
         `).join('');
@@ -502,7 +530,10 @@
         title: document.getElementById('appoint_desc').value,
         appoint_date: document.getElementById('appoint_date').value,
         appoint_time: document.getElementById('appoint_time').value,
-        appoint_type: document.getElementById('appoint_type').value
+        appoint_type: document.getElementById('appoint_type').value,
+        black_number: document.getElementById('appoint_black_num').value,
+        red_number: document.getElementById('appoint_red_num').value,
+        court_name: document.getElementById('appoint_court_name').value
       };
 
       const url = id ? `/api/appointments/${id}` : '/api/appointments';
