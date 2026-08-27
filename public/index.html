@@ -234,7 +234,7 @@
     </div>
   </div>
 
-  <!-- Modal บันทึก/แก้ไข ตารางนัด -->
+  <!-- Modal บันทึก/แก้ไข ตารางนัด (พร้อม Dropdown ซิงค์ข้อมูลคดี) -->
   <div class="modal fade" id="scheduleModal" tabindex="-1">
     <div class="modal-dialog">
       <div class="modal-content">
@@ -245,6 +245,15 @@
         <div class="modal-body">
           <form id="scheduleForm">
             <input type="hidden" id="appoint_id">
+
+            <!-- ซิงค์ข้อมูลจากสำนวนคดี -->
+            <div class="mb-3 p-2 bg-light rounded border">
+              <label class="form-label small fw-bold text-primary mb-1"><i class="bi bi-link-45deg"></i> เลือกดึงข้อมูลจากสำนวนคดี (ซิงค์อัตโนมัติ)</label>
+              <select id="caseSelector" class="form-select form-select-sm" onchange="autoFillCaseData(this.value)">
+                <option value="">-- พิมพ์เอง หรือเลือกสำนวนคดีเพื่อกรอกอัตโนมัติ --</option>
+              </select>
+            </div>
+
             <div class="mb-3">
               <label class="form-label small">ประเภทนัด</label>
               <select id="appoint_type" class="form-select" required>
@@ -395,6 +404,7 @@
         document.getElementById('loginView').classList.add('d-none');
         document.getElementById('mainView').classList.remove('d-none');
         document.getElementById('userDisplay').innerText = JSON.parse(user).fullname;
+        loadCases();
         loadSchedules();
       } else {
         document.getElementById('loginView').classList.remove('d-none');
@@ -457,6 +467,35 @@
       }
     }
 
+    // --- ระบบซิงค์ข้อมูลสำนวนคดีลง Dropdown ของตารางนัด ---
+    function populateCaseSelector() {
+      const select = document.getElementById('caseSelector');
+      if (!select) return;
+      select.innerHTML = '<option value="">-- พิมพ์เอง หรือเลือกสำนวนคดีเพื่อกรอกอัตโนมัติ --</option>';
+      caseDataList.forEach(c => {
+        const title = `${c.black_number || 'ไม่ระบุดำ'} | ${c.red_number || 'ไม่ระบุแดง'} (${c.court_name}) - ${c.case_type || ''}`;
+        const opt = document.createElement('option');
+        opt.value = c.id;
+        opt.innerText = title;
+        select.appendChild(opt);
+      });
+    }
+
+    function autoFillCaseData(caseId) {
+      if (!caseId) return;
+      const selected = caseDataList.find(c => c.id == caseId);
+      if (!selected) return;
+
+      document.getElementById('appoint_black_num').value = selected.black_number || '';
+      document.getElementById('appoint_red_num').value = selected.red_number || '';
+      document.getElementById('appoint_court_name').value = selected.court_name || '';
+      
+      const descInput = document.getElementById('appoint_desc');
+      if (!descInput.value) {
+        descInput.value = selected.case_type ? `${selected.case_type}` : '';
+      }
+    }
+
     // --- Schedule Logic ---
     function openScheduleModal(type) {
       document.getElementById('appoint_id').value = '';
@@ -468,12 +507,15 @@
       document.getElementById('appoint_red_num').value = '';
       document.getElementById('appoint_court_name').value = '';
       document.getElementById('appoint_desc').value = '';
+      document.getElementById('caseSelector').value = '';
+      populateCaseSelector();
       scheduleModal.show();
     }
 
     function editSchedule(id) {
       const item = scheduleDataList.find(d => d.id === id);
       if (!item) return;
+      populateCaseSelector();
       document.getElementById('appoint_id').value = item.id;
       document.getElementById('appoint_type').value = item.appoint_type;
       document.getElementById('appoint_date').value = item.appoint_date;
@@ -482,6 +524,7 @@
       document.getElementById('appoint_red_num').value = item.red_number || '';
       document.getElementById('appoint_court_name').value = item.court_name || '';
       document.getElementById('appoint_desc').value = item.title;
+      document.getElementById('caseSelector').value = '';
       document.getElementById('modalScheduleTitle').innerText = 'แก้ไขวันนัดหมาย';
       scheduleModal.show();
     }
@@ -638,6 +681,7 @@
         const res = await fetch('/api/cases');
         caseDataList = await res.json();
         renderCasesTable(caseDataList);
+        populateCaseSelector();
       } catch (err) {
         console.error('Load Cases Error:', err);
       }
