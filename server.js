@@ -73,18 +73,18 @@ app.get('/api/cases', (req, res) => {
 });
 
 app.post('/api/cases', (req, res) => {
-  const { black_number, red_number, court_name, lawyer_name, case_type, claim_amount } = req.body;
-  db.run('INSERT INTO cases (black_number, red_number, court_name, lawyer_name, case_type, claim_amount) VALUES (?, ?, ?, ?, ?, ?)',
-    [black_number, red_number, court_name, lawyer_name, case_type, claim_amount], function(err) {
+  const { category, black_number, red_number, court_name, lawyer_name, case_type, claim_amount } = req.body;
+  db.run('INSERT INTO cases (category, black_number, red_number, court_name, lawyer_name, case_type, claim_amount) VALUES (?, ?, ?, ?, ?, ?, ?)',
+    [category || 'คดีแพ่ง', black_number, red_number, court_name, lawyer_name, case_type, claim_amount], function(err) {
       if (err) return res.status(500).json({ error: err.message });
       res.json({ id: this.lastID });
     });
 });
 
 app.put('/api/cases/:id', (req, res) => {
-  const { black_number, red_number, court_name, lawyer_name, case_type, claim_amount } = req.body;
-  const sql = `UPDATE cases SET black_number = ?, red_number = ?, court_name = ?, lawyer_name = ?, case_type = ?, claim_amount = ? WHERE id = ?`;
-  db.run(sql, [black_number, red_number, court_name, lawyer_name, case_type, claim_amount, req.params.id], function(err) {
+  const { category, black_number, red_number, court_name, lawyer_name, case_type, claim_amount } = req.body;
+  const sql = `UPDATE cases SET category = ?, black_number = ?, red_number = ?, court_name = ?, lawyer_name = ?, case_type = ?, claim_amount = ? WHERE id = ?`;
+  db.run(sql, [category || 'คดีแพ่ง', black_number, red_number, court_name, lawyer_name, case_type, claim_amount, req.params.id], function(err) {
     if (err) return res.status(500).json({ error: err.message });
     res.json({ success: true, changes: this.changes });
   });
