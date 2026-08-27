@@ -140,6 +140,27 @@ app.post('/api/documents', upload.single('file'), async (req, res) => {
   res.json({ id: data[0].id });
 });
 
+// --- Appointments API ---
+app.get('/api/appointments', async (req, res) => {
+  const { data, error } = await supabase.from('appointments').select('*').order('appoint_date', { ascending: true });
+  if (error) return res.status(500).json({ error: error.message });
+  res.json(data || []);
+});
+
+app.post('/api/appointments', async (req, res) => {
+  const { title, appoint_date, appoint_time, appoint_type } = req.body;
+  const { data, error } = await supabase.from('appointments').insert([{ title, appoint_date, appoint_time, appoint_type }]).select();
+  if (error) return res.status(500).json({ error: error.message });
+  res.json({ id: data[0].id, success: true });
+});
+
+app.put('/api/appointments/:id', async (req, res) => {
+  const { title, appoint_date, appoint_time, appoint_type } = req.body;
+  const { error } = await supabase.from('appointments').update({ title, appoint_date, appoint_time, appoint_type }).eq('id', req.params.id);
+  if (error) return res.status(500).json({ error: error.message });
+  res.json({ success: true });
+});
+
 app.delete('/api/documents/:id', async (req, res) => {
   const { data: doc } = await supabase.from('documents').select('file_path').eq('id', req.params.id).maybeSingle();
   if (doc && doc.file_path) {
