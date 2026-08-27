@@ -1,0 +1,661 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <title>SmartLaw - SATHITDHAM LAW</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
+  <style>
+    body { background-color: #f8f9fa; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+    .topbar { background-color: #1e366c; color: white; height: 50px; }
+    .sidebar { width: 100px; min-height: calc(100vh - 50px); background-color: #a8b4cf; border-right: 1px solid #a8b4cf; }
+    .nav-btn { display: flex; flex-direction: column; align-items: center; justify-content: center; width: 100%; padding: 15px 0; border: none; background: none; font-size: 11px; color: #555; cursor: pointer; }
+    .nav-btn i { font-size: 20px; margin-bottom: 4px; }
+    .nav-btn.active, .nav-btn:hover { background-color: #a8b4cf; color: #000; font-weight: bold; }
+    .content-area { flex-grow: 1; padding: 25px; overflow-y: auto; height: calc(100vh - 50px); }
+    .client-card { background: white; border-radius: 12px; padding: 16px; border: 1px solid #eee; position: relative; }
+    .doc-card { background: white; border-radius: 12px; padding: 16px; border: 1px solid #eee; text-align: center; }
+    .login-container { min-height: 100vh; display: flex; align-items: center; justify-content: center; background-color: #e9ecef; }
+    .login-box { width: 100%; max-width: 400px; padding: 30px; background: white; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
+  </style>
+</head>
+<body>
+
+  <!-- 1. หน้า Login -->
+  <div id="loginView" class="login-container">
+    <div class="login-box text-center">
+      <img src="logo.png" alt="Logo" class="rounded-circle mb-2" style="height: 70px; width: 70px; object-fit: cover;">
+      <h3 class="mb-1 fw-bold" style="color: #557086;">SATHITDHAM LAW</h3>
+      <p class="text-muted small mb-4">ระบบจัดการคดีและเอกสารภายในสำนักงาน</p>
+      <form id="loginForm">
+        <div class="mb-3 text-start">
+          <label class="form-label small">ชื่อผู้ใช้งาน</label>
+          <input type="text" id="loginUsername" class="form-control" placeholder="admin" required>
+        </div>
+        <div class="mb-3 text-start">
+          <label class="form-label small">รหัสผ่าน</label>
+          <input type="password" id="loginPassword" class="form-control" placeholder="1234" required>
+        </div>
+        <div id="loginError" class="alert alert-danger py-1 small d-none"></div>
+        <button type="submit" class="btn btn-primary w-100 mt-2" style="background-color: #203b7a; border-color: #203b7a;">เข้าสู่ระบบ</button>
+      </form>
+    </div>
+  </div>
+
+  <!-- 2. หน้า Dashboard หลัก -->
+  <div id="mainView" class="d-none">
+    <div class="topbar d-flex justify-content-between align-items-center px-4">
+      <div class="fw-bold d-flex align-items-center">
+  <img src="logo.png" alt="Logo" class="rounded-circle me-2" style="height: 38px; width: 38px; object-fit: cover;">
+  <span>SATHITDHAM LAW</span>
+</div>
+      <div class="d-flex align-items-center">
+        <span class="small me-3"><i class="bi bi-person-circle me-1"></i> <span id="userDisplay">Admin</span></span>
+        <button class="btn btn-outline-light btn-sm py-0 px-2" onclick="logout()"><i class="bi bi-box-arrow-right"></i> ออกจากระบบ</button>
+      </div>
+    </div>
+
+    <div class="d-flex">
+      <div class="sidebar d-flex flex-column align-items-center">
+        <button class="nav-btn active" onclick="switchTab('schedule', this)"><i class="bi bi-calendar3"></i>ตารางนัด</button>
+        <button class="nav-btn" onclick="switchTab('cases', this)"><i class="bi bi-hammer"></i>สำนวนคดี</button>
+        <button class="nav-btn" onclick="switchTab('plaintiff', this)"><i class="bi bi-people"></i>คดีโจทก์</button>
+        <button class="nav-btn" onclick="switchTab('defendant', this)"><i class="bi bi-person-badge"></i>คดีจำเลย</button>
+        <button class="nav-btn" onclick="switchTab('storage', this)"><i class="bi bi-folder2-open"></i>เก็บข้อมูล</button>
+      </div>
+
+      <div class="content-area">
+        <!-- หมวดตารางนัด -->
+        <div id="tab-schedule" class="tab-content">
+          <div class="d-flex justify-content-between align-items-center mb-4">
+            <h4 class="m-0">ตารางนัดประจำเดือน</h4>
+            <div>
+              <button class="btn btn-primary btn-sm" onclick="openScheduleModal('วันนัด')">+ เพิ่มวันนัด</button>
+              <button class="btn btn-dark btn-sm" onclick="openScheduleModal('วันอุทธรณ์')">+ เพิ่มวันอุทธรณ์</button>
+              <button class="btn btn-dark btn-sm" onclick="openScheduleModal('วันฎีกา')">+ เพิ่มวันฎีกา</button>
+            </div>
+          </div>
+          <div class="card p-3 shadow-sm border-0">
+            <table class="table table-bordered text-center align-middle">
+              <thead class="table-secondary">
+                <tr>
+                  <th style="width: 20%;">วันที่นัด</th>
+                  <th style="width: 15%;">ประเภทนัด</th>
+                  <th style="width: 45%;">รายการ / เรื่อง</th>
+                  <th style="width: 20%;">จัดการ</th>
+                </tr>
+              </thead>
+              <tbody id="scheduleList"></tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- หมวดสำนวนคดี -->
+        <div id="tab-cases" class="tab-content d-none">
+          <h4 class="mb-4">เพิ่มและจัดการสำนวนคดี</h4>
+          <div class="card p-4 shadow-sm border-0 mb-4">
+            <form id="createCaseForm" class="row g-3">
+              <div class="col-md-3"><label class="form-label small">หมายเลขคดีดำที่</label><input type="text" id="black_num" class="form-control" placeholder="เช่น ผบ. 123/2569"></div>
+              <div class="col-md-3"><label class="form-label small">หมายเลขคดีแดงที่</label><input type="text" id="red_num" class="form-control" placeholder="เช่น ผบ. 456/2569"></div>
+              <div class="col-md-3"><label class="form-label small">ศาล</label><input type="text" id="court_name" class="form-control" placeholder="เช่น ศาลแพ่ง" required></div>
+              <div class="col-md-3"><label class="form-label small">ทนายความเจ้าของเรื่อง</label><input type="text" id="lawyer_name" class="form-control" placeholder="ชื่อทนาย"></div>
+              <div class="col-md-4"><label class="form-label small">ข้อกล่าวหา / ฐานความผิด</label><input type="text" id="case_type" class="form-control" placeholder="เช่น ผิดสัญญา"></div>
+              <div class="col-md-4"><label class="form-label small">ทุนทรัพย์ (บาท)</label><input type="number" id="claim_amount" class="form-control" placeholder="0.00"></div>
+              <div class="col-md-4 d-flex align-items-end"><button type="submit" class="btn btn-primary w-100">บันทึกสำนวนคดี</button></div>
+            </form>
+          </div>
+          <h5>รายการสำนวนคดีทั้งหมด</h5>
+          <div class="table-responsive bg-white rounded shadow-sm">
+            <table class="table table-hover mb-0">
+              <thead class="table-light">
+                <tr><th>คดีดำ</th><th>คดีแดง</th><th>ศาล</th><th>ฐานความผิด</th><th>ทนายความ</th><th>ทุนทรัพย์</th><th style="width: 170px;" class="text-center">จัดการ</th></tr>
+              </thead>
+              <tbody id="caseTableBody"></tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- หมวดคดีโจทก์ / จำเลย -->
+        <div id="tab-clients" class="tab-content d-none">
+          <div class="d-flex justify-content-between align-items-center mb-4">
+            <h4 id="clientSectionTitle" class="m-0"></h4>
+            <button class="btn btn-primary btn-sm" onclick="openClientModal()">+ เพิ่มลูกความ</button>
+          </div>
+          <div class="row g-3" id="clientCardContainer"></div>
+        </div>
+
+        <!-- หมวดเก็บข้อมูล -->
+        <div id="tab-storage" class="tab-content d-none">
+          <div class="d-flex justify-content-between align-items-center mb-4">
+            <h4 class="m-0">เก็บข้อมูลและคลังเอกสาร</h4>
+            <div>
+              <input type="file" id="fileDocInput" class="d-none" onchange="uploadStorageFile(this)">
+              <button class="btn btn-success btn-sm" onclick="document.getElementById('fileDocInput').click()">+ อัปโหลดไฟล์เอกสาร</button>
+            </div>
+          </div>
+          <div class="row g-3" id="docCardContainer"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal บันทึก/แก้ไข ตารางนัด -->
+  <div class="modal fade" id="scheduleModal" tabindex="-1">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="modalScheduleTitle">บันทึกวันนัด</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+          <form id="scheduleForm">
+            <input type="hidden" id="appoint_id">
+            <div class="mb-3">
+              <label class="form-label small">ประเภทนัด</label>
+              <select id="appoint_type" class="form-select" required>
+                <option value="วันนัด">วันนัด</option>
+                <option value="วันอุทธรณ์">วันอุทธรณ์</option>
+                <option value="วันฎีกา">วันฎีกา</option>
+              </select>
+            </div>
+            <div class="mb-3">
+              <label class="form-label small">วันที่นัดหมาย</label>
+              <input type="date" id="appoint_date" class="form-control" required>
+            </div>
+            <div class="mb-3">
+              <label class="form-label small">รายละเอียด / เรื่อง / ศาล</label>
+              <textarea id="appoint_desc" class="form-control" rows="3" required></textarea>
+            </div>
+            <button type="submit" class="btn btn-primary w-100">บันทึกข้อมูล</button>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal แก้ไขสำนวนคดี -->
+  <div class="modal fade" id="editCaseModal" tabindex="-1">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title">แก้ไขสำนวนคดี</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+          <form id="editCaseForm" class="row g-3">
+            <input type="hidden" id="edit_case_id">
+            <div class="col-md-6"><label class="form-label small">หมายเลขคดีดำที่</label><input type="text" id="edit_black_num" class="form-control form-control-sm"></div>
+            <div class="col-md-6"><label class="form-label small">หมายเลขคดีแดงที่</label><input type="text" id="edit_red_num" class="form-control form-control-sm"></div>
+            <div class="col-md-6"><label class="form-label small">ศาล</label><input type="text" id="edit_court_name" class="form-control form-control-sm" required></div>
+            <div class="col-md-6"><label class="form-label small">ทนายความเจ้าของเรื่อง</label><input type="text" id="edit_lawyer_name" class="form-control form-control-sm"></div>
+            <div class="col-md-6"><label class="form-label small">ข้อกล่าวหา / ฐานความผิด</label><input type="text" id="edit_case_type" class="form-control form-control-sm"></div>
+            <div class="col-md-6"><label class="form-label small">ทุนทรัพย์ (บาท)</label><input type="number" id="edit_claim_amount" class="form-control form-control-sm"></div>
+            <div class="col-12"><button type="submit" class="btn btn-primary btn-sm w-100 mt-2">บันทึกการแก้ไข</button></div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal เพิ่ม/แก้ไข ลูกความ -->
+  <div class="modal fade" id="clientModal" tabindex="-1">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header"><h5 class="modal-title" id="clientModalTitle">รายละเอียดลูกความ</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+        <div class="modal-body">
+          <form id="clientForm">
+            <input type="hidden" id="modalClientId">
+            <input type="hidden" id="modalPartyType">
+            <div class="mb-2">
+              <label class="form-label small">ประเภท</label>
+              <select id="modalClientType" class="form-select form-select-sm">
+                <option value="บุคคลทั่วไป">บุคคลทั่วไป</option>
+                <option value="หน่วยงานในราชอาณาจักรไทย">หน่วยงานในราชอาณาจักรไทย</option>
+              </select>
+            </div>
+            <div class="mb-2"><label class="form-label small">ชื่อ - นามสกุล / ชื่อหน่วยงาน</label><input type="text" id="modalClientName" class="form-control form-control-sm" required></div>
+            <div class="mb-2"><label class="form-label small">เบอร์โทรศัพท์</label><input type="text" id="modalClientPhone" class="form-control form-control-sm"></div>
+            <div class="mb-2"><label class="form-label small">เลขประจำตัวผู้เสียภาษี / บัตรประชาชน</label><input type="text" id="modalClientTax" class="form-control form-control-sm"></div>
+            <div class="mb-2"><label class="form-label small">ที่อยู่</label><textarea id="modalClientAddress" class="form-control form-control-sm" rows="2"></textarea></div>
+            <button type="submit" class="btn btn-primary btn-sm w-100 mt-2">บันทึก</button>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal ยืนยันการลบ (ใช้ร่วมกันทุกหมวด) -->
+  <div class="modal fade" id="deleteModal" tabindex="-1">
+    <div class="modal-dialog modal-sm">
+      <div class="modal-content">
+        <div class="modal-header bg-danger text-white">
+          <h6 class="modal-title">ยืนยันการลบ</h6>
+          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body text-center">
+          <p class="mb-0" id="deleteConfirmText">ต้องการลบรายการนี้ใช่หรือไม่?</p>
+        </div>
+        <div class="modal-footer justify-content-center">
+          <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">ยกเลิก</button>
+          <button type="button" class="btn btn-danger btn-sm" id="confirmDeleteBtn">ลบข้อมูล</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+  <script>
+    let currentPartyType = 'plaintiff';
+    let scheduleDataList = [];
+    let caseDataList = [];
+    let clientDataList = [];
+    
+    // ตัวแปรเก็บ ID สำหรับลบ
+    let deleteTargetId = null;
+    let deleteCaseTargetId = null;
+    let deleteClientTargetId = null;
+    let deleteDocTargetId = null;
+
+    const scheduleModal = new bootstrap.Modal(document.getElementById('scheduleModal'));
+    const editCaseModal = new bootstrap.Modal(document.getElementById('editCaseModal'));
+    const clientModal = new bootstrap.Modal(document.getElementById('clientModal'));
+    const deleteModal = new bootstrap.Modal(document.getElementById('deleteModal'));
+
+    // --- Authentication Logic ---
+    function checkAuth() {
+      const user = localStorage.getItem('smartlaw_user');
+      if (user) {
+        document.getElementById('loginView').classList.add('d-none');
+        document.getElementById('mainView').classList.remove('d-none');
+        document.getElementById('userDisplay').innerText = JSON.parse(user).fullname;
+        loadSchedules();
+      } else {
+        document.getElementById('loginView').classList.remove('d-none');
+        document.getElementById('mainView').classList.add('d-none');
+      }
+    }
+
+    document.getElementById('loginForm').onsubmit = async (e) => {
+      e.preventDefault();
+      const errBox = document.getElementById('loginError');
+      errBox.classList.add('d-none');
+
+      const res = await fetch('/api/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          username: document.getElementById('loginUsername').value,
+          password: document.getElementById('loginPassword').value
+        })
+      });
+
+      const data = await res.json();
+      if (res.ok) {
+        localStorage.setItem('smartlaw_user', JSON.stringify(data.user));
+        checkAuth();
+      } else {
+        errBox.innerText = data.error;
+        errBox.classList.remove('d-none');
+      }
+    };
+
+    function logout() {
+      localStorage.removeItem('smartlaw_user');
+      checkAuth();
+    }
+
+    // --- Navigation Tabs ---
+    function switchTab(tab, btn) {
+      document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      document.querySelectorAll('.tab-content').forEach(c => c.classList.add('d-none'));
+
+      if (tab === 'schedule') {
+        document.getElementById('tab-schedule').classList.remove('d-none');
+        loadSchedules();
+      } else if (tab === 'cases') {
+        document.getElementById('tab-cases').classList.remove('d-none');
+        loadCases();
+      } else if (tab === 'plaintiff' || tab === 'defendant') {
+        currentPartyType = tab;
+        document.getElementById('tab-clients').classList.remove('d-none');
+        document.getElementById('clientSectionTitle').innerText = tab === 'plaintiff' ? 'รายชื่อลูกความ (ฝ่ายโจทก์)' : 'รายชื่อลูกความ (ฝ่ายจำเลย)';
+        loadClients(tab);
+      } else if (tab === 'storage') {
+        document.getElementById('tab-storage').classList.remove('d-none');
+        loadDocuments();
+      }
+    }
+
+    // --- Schedule Logic ---
+    function openScheduleModal(type) {
+      document.getElementById('appoint_id').value = '';
+      document.getElementById('appoint_type').value = type;
+      document.getElementById('modalScheduleTitle').innerText = `เพิ่ม (${type})`;
+      document.getElementById('appoint_date').value = new Date().toISOString().slice(0, 10);
+      document.getElementById('appoint_desc').value = '';
+      scheduleModal.show();
+    }
+
+    function editSchedule(id) {
+      const item = scheduleDataList.find(d => d.id === id);
+      if (!item) return;
+      document.getElementById('appoint_id').value = item.id;
+      document.getElementById('appoint_type').value = item.appoint_type;
+      document.getElementById('appoint_date').value = item.appoint_date;
+      document.getElementById('appoint_desc').value = item.title;
+      document.getElementById('modalScheduleTitle').innerText = 'แก้ไขวันนัดหมาย';
+      scheduleModal.show();
+    }
+
+    function triggerDelete(id) {
+      clearDeleteTargets();
+      deleteTargetId = id;
+      document.getElementById('deleteConfirmText').innerText = 'ต้องการลบรายการนัดหมายนี้ใช่หรือไม่?';
+      deleteModal.show();
+    }
+
+    async function loadSchedules() {
+      try {
+        const res = await fetch('/api/appointments');
+        scheduleDataList = await res.json();
+        const tbody = document.getElementById('scheduleList');
+        if (!scheduleDataList || scheduleDataList.length === 0) {
+          tbody.innerHTML = '<tr><td colspan="4" class="text-muted p-4">ยังไม่มีรายการนัดหมาย</td></tr>';
+          return;
+        }
+
+        tbody.innerHTML = scheduleDataList.map(d => `
+          <tr>
+            <td class="fw-bold">${d.appoint_date}</td>
+            <td><span class="badge ${d.appoint_type === 'วันนัด' ? 'bg-primary' : 'bg-dark'}">${d.appoint_type}</span></td>
+            <td class="text-start">${d.title}</td>
+            <td>
+              <button class="btn btn-outline-warning btn-sm me-1" onclick="editSchedule(${d.id})"><i class="bi bi-pencil-square"></i> แก้ไข</button>
+              <button class="btn btn-outline-danger btn-sm" onclick="triggerDelete(${d.id})"><i class="bi bi-trash"></i> ลบ</button>
+            </td>
+          </tr>
+        `).join('');
+      } catch (err) {
+        console.error(err);
+      }
+    }
+
+    document.getElementById('scheduleForm').onsubmit = async (e) => {
+      e.preventDefault();
+      const id = document.getElementById('appoint_id').value;
+      const payload = {
+        title: document.getElementById('appoint_desc').value,
+        appoint_date: document.getElementById('appoint_date').value,
+        appoint_type: document.getElementById('appoint_type').value
+      };
+
+      const url = id ? `/api/appointments/${id}` : '/api/appointments';
+      const method = id ? 'PUT' : 'POST';
+
+      await fetch(url, {
+        method: method,
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+
+      scheduleModal.hide();
+      loadSchedules();
+    };
+
+    // --- Cases Logic ---
+    function editCase(id) {
+      const item = caseDataList.find(c => c.id === id);
+      if (!item) return;
+      document.getElementById('edit_case_id').value = item.id;
+      document.getElementById('edit_black_num').value = item.black_number || '';
+      document.getElementById('edit_red_num').value = item.red_number || '';
+      document.getElementById('edit_court_name').value = item.court_name || '';
+      document.getElementById('edit_lawyer_name').value = item.lawyer_name || '';
+      document.getElementById('edit_case_type').value = item.case_type || '';
+      document.getElementById('edit_claim_amount').value = item.claim_amount || '';
+      editCaseModal.show();
+    }
+
+    document.getElementById('editCaseForm').onsubmit = async (e) => {
+      e.preventDefault();
+      const id = document.getElementById('edit_case_id').value;
+      const payload = {
+        black_number: document.getElementById('edit_black_num').value,
+        red_number: document.getElementById('edit_red_num').value,
+        court_name: document.getElementById('edit_court_name').value,
+        lawyer_name: document.getElementById('edit_lawyer_name').value,
+        case_type: document.getElementById('edit_case_type').value,
+        claim_amount: document.getElementById('edit_claim_amount').value
+      };
+
+      await fetch(`/api/cases/${id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+
+      editCaseModal.hide();
+      loadCases();
+    };
+
+    function triggerDeleteCase(id) {
+      clearDeleteTargets();
+      deleteCaseTargetId = id;
+      document.getElementById('deleteConfirmText').innerText = 'ต้องการลบสำนวนคดีนี้ใช่หรือไม่?';
+      deleteModal.show();
+    }
+
+    async function loadCases() {
+      try {
+        const res = await fetch('/api/cases');
+        caseDataList = await res.json();
+        const tbody = document.getElementById('caseTableBody');
+
+        if (!caseDataList || caseDataList.length === 0) {
+          tbody.innerHTML = '<tr><td colspan="7" class="text-center text-muted p-4">ยังไม่มีรายการสำนวนคดี</td></tr>';
+          return;
+        }
+
+        tbody.innerHTML = caseDataList.map(c => `
+          <tr>
+            <td><span class="text-dark fw-bold">${c.black_number || '-'}</span></td>
+            <td><span class="text-danger fw-bold">${c.red_number || '-'}</span></td>
+            <td>${c.court_name}</td>
+            <td>${c.case_type || '-'}</td>
+            <td>${c.lawyer_name || '-'}</td>
+            <td>${Number(c.claim_amount || 0).toLocaleString()} ฿</td>
+            <td class="text-center">
+              <button class="btn btn-outline-warning btn-sm py-0 px-2 me-1" onclick="editCase(${c.id})"><i class="bi bi-pencil-square"></i> แก้ไข</button>
+              <button class="btn btn-outline-danger btn-sm py-0 px-2" onclick="triggerDeleteCase(${c.id})"><i class="bi bi-trash"></i> ลบ</button>
+            </td>
+          </tr>
+        `).join('');
+      } catch (err) {
+        console.error('Load Cases Error:', err);
+      }
+    }
+
+    document.getElementById('createCaseForm').onsubmit = async (e) => {
+      e.preventDefault();
+      await fetch('/api/cases', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          black_number: document.getElementById('black_num').value,
+          red_number: document.getElementById('red_num').value,
+          court_name: document.getElementById('court_name').value,
+          lawyer_name: document.getElementById('lawyer_name').value,
+          case_type: document.getElementById('case_type').value,
+          claim_amount: document.getElementById('claim_amount').value
+        })
+      });
+      e.target.reset();
+      loadCases();
+    };
+
+    // --- Clients Logic ---
+    function openClientModal() {
+      document.getElementById('modalClientId').value = '';
+      document.getElementById('modalPartyType').value = currentPartyType;
+      document.getElementById('clientForm').reset();
+      document.getElementById('clientModalTitle').innerText = 'เพิ่มรายละเอียดลูกความ';
+      clientModal.show();
+    }
+
+    function editClient(id) {
+      const item = clientDataList.find(c => c.id === id);
+      if (!item) return;
+      document.getElementById('modalClientId').value = item.id;
+      document.getElementById('modalPartyType').value = item.party_type;
+      document.getElementById('modalClientType').value = item.client_type;
+      document.getElementById('modalClientName').value = item.name;
+      document.getElementById('modalClientPhone').value = item.phone || '';
+      document.getElementById('modalClientTax').value = item.tax_id || '';
+      document.getElementById('modalClientAddress').value = item.address || '';
+      document.getElementById('clientModalTitle').innerText = 'แก้ไขรายละเอียดลูกความ';
+      clientModal.show();
+    }
+
+    function triggerDeleteClient(id) {
+      clearDeleteTargets();
+      deleteClientTargetId = id;
+      document.getElementById('deleteConfirmText').innerText = 'ต้องการลบข้อมูลลูกความรายนี้ใช่หรือไม่?';
+      deleteModal.show();
+    }
+
+    async function loadClients(partyType) {
+      const res = await fetch(`/api/clients?party_type=${partyType}`);
+      clientDataList = await res.json();
+      const container = document.getElementById('clientCardContainer');
+      
+      if (!clientDataList || clientDataList.length === 0) {
+        container.innerHTML = '<div class="col-12 text-center text-muted p-4">ยังไม่มีข้อมูลลูกความ</div>';
+        return;
+      }
+
+      container.innerHTML = clientDataList.map(c => `
+        <div class="col-md-4">
+          <div class="client-card shadow-sm">
+            <div class="d-flex justify-content-between align-items-start mb-2">
+              <span class="badge ${c.client_type === 'บุคคลทั่วไป' ? 'bg-success' : 'bg-primary'}">${c.client_type}</span>
+              <div>
+                <button class="btn btn-outline-warning btn-sm py-0 px-2 me-1" onclick="editClient(${c.id})"><i class="bi bi-pencil-square"></i></button>
+                <button class="btn btn-outline-danger btn-sm py-0 px-2" onclick="triggerDeleteClient(${c.id})"><i class="bi bi-trash"></i></button>
+              </div>
+            </div>
+            <div class="fw-bold fs-6">${c.name}</div>
+            <div class="text-muted small mt-1"><i class="bi bi-telephone me-1"></i>${c.phone || 'ไม่ระบุเบอร์'}</div>
+            ${c.tax_id ? `<div class="text-muted small"><i class="bi bi-card-text me-1"></i>${c.tax_id}</div>` : ''}
+            ${c.address ? `<div class="text-muted small text-truncate" title="${c.address}"><i class="bi bi-geo-alt me-1"></i>${c.address}</div>` : ''}
+          </div>
+        </div>
+      `).join('');
+    }
+
+    document.getElementById('clientForm').onsubmit = async (e) => {
+      e.preventDefault();
+      const id = document.getElementById('modalClientId').value;
+      const payload = {
+        party_type: document.getElementById('modalPartyType').value,
+        client_type: document.getElementById('modalClientType').value,
+        name: document.getElementById('modalClientName').value,
+        phone: document.getElementById('modalClientPhone').value,
+        tax_id: document.getElementById('modalClientTax').value,
+        address: document.getElementById('modalClientAddress').value
+      };
+
+      const url = id ? `/api/clients/${id}` : '/api/clients';
+      const method = id ? 'PUT' : 'POST';
+
+      await fetch(url, {
+        method: method,
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+
+      clientModal.hide();
+      loadClients(currentPartyType);
+    };
+
+    // --- Documents Logic ---
+    function triggerDeleteDoc(id) {
+      clearDeleteTargets();
+      deleteDocTargetId = id;
+      document.getElementById('deleteConfirmText').innerText = 'ต้องการลบไฟล์เอกสารนี้ใช่หรือไม่?';
+      deleteModal.show();
+    }
+
+    async function loadDocuments() {
+      const res = await fetch('/api/documents');
+      const data = await res.json();
+      const colors = { PDF: 'text-danger', DOCX: 'text-primary', JPG: 'text-success', PNG: 'text-warning' };
+      const container = document.getElementById('docCardContainer');
+
+      if (!data || data.length === 0) {
+        container.innerHTML = '<div class="col-12 text-center text-muted p-4">ยังไม่มีไฟล์เอกสารที่บันทึกไว้</div>';
+        return;
+      }
+
+      container.innerHTML = data.map(d => `
+        <div class="col-md-3">
+          <div class="doc-card shadow-sm">
+            <div class="fs-1 ${colors[d.file_type] || 'text-secondary'} mb-2"><i class="bi bi-file-earmark-text"></i></div>
+            <div class="fw-bold text-truncate" title="${d.title}">${d.title}</div>
+            <div class="text-muted small mb-3">${d.created_at}</div>
+            <div class="d-flex gap-1">
+              <a href="/uploads/${d.file_path}" target="_blank" class="btn btn-outline-secondary btn-sm flex-fill">เปิดดู</a>
+              <a href="/uploads/${d.file_path}" download="${d.title}" class="btn btn-outline-primary btn-sm px-2" title="ดาวน์โหลด"><i class="bi bi-download"></i></a>
+              <button class="btn btn-outline-danger btn-sm px-2" onclick="triggerDeleteDoc(${d.id})" title="ลบไฟล์"><i class="bi bi-trash"></i></button>
+            </div>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    async function uploadStorageFile(input) {
+      if (!input.files[0]) return;
+      const formData = new FormData();
+      formData.append('file', input.files[0]);
+      formData.append('title', input.files[0].name);
+      await fetch('/api/documents', { method: 'POST', body: formData });
+      input.value = '';
+      loadDocuments();
+    }
+
+    // --- รวมคำสั่งลบผ่าน Modal ยืนยันเดียว ป้องกันบั๊ก ---
+    function clearDeleteTargets() {
+      deleteTargetId = null;
+      deleteCaseTargetId = null;
+      deleteClientTargetId = null;
+      deleteDocTargetId = null;
+    }
+
+    document.getElementById('confirmDeleteBtn').onclick = async () => {
+      try {
+        if (deleteTargetId) {
+          await fetch(`/api/appointments/${deleteTargetId}`, { method: 'DELETE' });
+          await loadSchedules();
+        } else if (deleteCaseTargetId) {
+          await fetch(`/api/cases/${deleteCaseTargetId}`, { method: 'DELETE' });
+          await loadCases();
+        } else if (deleteClientTargetId) {
+          await fetch(`/api/clients/${deleteClientTargetId}`, { method: 'DELETE' });
+          await loadClients(currentPartyType);
+        } else if (deleteDocTargetId) {
+          await fetch(`/api/documents/${deleteDocTargetId}`, { method: 'DELETE' });
+          await loadDocuments();
+        }
+      } catch (err) {
+        console.error('Delete Error:', err);
+      } finally {
+        clearDeleteTargets();
+        deleteModal.hide();
+      }
+    };
+
+    // เริ่มต้นระบบ
+    checkAuth();
+  </script>
+</body>
+</html>
