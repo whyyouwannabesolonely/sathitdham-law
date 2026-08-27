@@ -34,15 +34,25 @@ app.get('/api/appointments', async (req, res) => {
 });
 
 app.post('/api/appointments', async (req, res) => {
-  const { title, appoint_date, appoint_type } = req.body;
-  const { data, error } = await supabase.from('appointments').insert([{ title, appoint_date, appoint_type }]).select();
+  const { title, appoint_date, appoint_time, appoint_type } = req.body;
+  const { data, error } = await supabase.from('appointments').insert([{ 
+    title, 
+    appoint_date, 
+    appoint_time: appoint_time || '09:00', 
+    appoint_type 
+  }]).select();
   if (error) return res.status(500).json({ error: error.message });
   res.json({ id: data[0].id, success: true });
 });
 
 app.put('/api/appointments/:id', async (req, res) => {
-  const { title, appoint_date, appoint_type } = req.body;
-  const { error } = await supabase.from('appointments').update({ title, appoint_date, appoint_type }).eq('id', req.params.id);
+  const { title, appoint_date, appoint_time, appoint_type } = req.body;
+  const { error } = await supabase.from('appointments').update({ 
+    title, 
+    appoint_date, 
+    appoint_time: appoint_time || '09:00', 
+    appoint_type 
+  }).eq('id', req.params.id);
   if (error) return res.status(500).json({ error: error.message });
   res.json({ success: true });
 });
