@@ -9,12 +9,16 @@
     body { background-color: #f8f9fa; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
     .topbar { background-color: #1e366c; color: white; height: 50px; }
     .sidebar { width: 100px; min-height: calc(100vh - 50px); background-color: #a8b4cf; border-right: 1px solid #a8b4cf; }
-    .nav-btn { display: flex; flex-direction: column; align-items: center; justify-content: center; width: 100%; padding: 15px 0; border: none; background: none; font-size: 11px; color: #555; cursor: pointer; }
+    .nav-btn { display: flex; flex-direction: column; align-items: center; justify-content: center; width: 100%; padding: 12px 0; border: none; background: none; font-size: 11px; color: #2c3e50; cursor: pointer; }
     .nav-btn i { font-size: 20px; margin-bottom: 4px; }
-    .nav-btn.active, .nav-btn:hover { background-color: #a8b4cf; color: #000; font-weight: bold; }
+    .nav-btn.active, .nav-btn:hover { background-color: #8f9dbd; color: #000; font-weight: bold; }
     .content-area { flex-grow: 1; padding: 25px; overflow-y: auto; height: calc(100vh - 50px); }
     .client-card { background: white; border-radius: 12px; padding: 16px; border: 1px solid #eee; position: relative; }
     .doc-card { background: white; border-radius: 12px; padding: 16px; border: 1px solid #eee; text-align: center; }
+    .stat-card { background: white; border-radius: 12px; border: 1px solid #e2e8f0; border-left: 5px solid #1e366c; padding: 20px; box-shadow: 0 2px 4px rgba(0,0,0,0.04); }
+    .stat-card.crim { border-left-color: #dc3545; }
+    .stat-card.civil { border-left-color: #0d6efd; }
+    .stat-card.client { border-left-color: #198754; }
     .login-container { min-height: 100vh; display: flex; align-items: center; justify-content: center; background-color: #e9ecef; }
     .login-box { width: 100%; max-width: 400px; padding: 30px; background: white; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
   </style>
@@ -25,7 +29,7 @@
   <div id="loginView" class="login-container">
     <div class="login-box text-center">
       <img src="logo.png" alt="Logo" class="rounded-circle mb-2" style="height: 70px; width: 70px; object-fit: cover;">
-      <h3 class="mb-1 fw-bold" style="color: #557086;">SATHITDHAM LAW</h3>
+      <h3 class="mb-1 fw-bold" style="color: #1e366c;">SATHITDHAM LAW</h3>
       <p class="text-muted small mb-4">ระบบจัดการคดีและเอกสารภายในสำนักงาน</p>
       <form id="loginForm">
         <div class="mb-3 text-start">
@@ -37,7 +41,7 @@
           <input type="password" id="loginPassword" class="form-control" placeholder="1234" required>
         </div>
         <div id="loginError" class="alert alert-danger py-1 small d-none"></div>
-        <button type="submit" class="btn btn-primary w-100 mt-2" style="background-color: #203b7a; border-color: #203b7a;">เข้าสู่ระบบ</button>
+        <button type="submit" class="btn btn-primary w-100 mt-2" style="background-color: #1e366c; border-color: #1e366c;">เข้าสู่ระบบ</button>
       </form>
     </div>
   </div>
@@ -46,9 +50,9 @@
   <div id="mainView" class="d-none">
     <div class="topbar d-flex justify-content-between align-items-center px-4">
       <div class="fw-bold d-flex align-items-center">
-  <img src="logo.png" alt="Logo" class="rounded-circle me-2" style="height: 38px; width: 38px; object-fit: cover;">
-  <span>SATHITDHAM LAW</span>
-</div>
+        <img src="logo.png" alt="Logo" class="rounded-circle me-2" style="height: 38px; width: 38px; object-fit: cover;">
+        <span>SATHITDHAM LAW</span>
+      </div>
       <div class="d-flex align-items-center">
         <span class="small me-3"><i class="bi bi-person-circle me-1"></i> <span id="userDisplay">Admin</span></span>
         <button class="btn btn-outline-light btn-sm py-0 px-2" onclick="logout()"><i class="bi bi-box-arrow-right"></i> ออกจากระบบ</button>
@@ -56,12 +60,14 @@
     </div>
 
     <div class="d-flex">
+      <!-- แถบเมนูด้านซ้าย -->
       <div class="sidebar d-flex flex-column align-items-center">
         <button class="nav-btn active" onclick="switchTab('schedule', this)"><i class="bi bi-calendar3"></i>ตารางนัด</button>
         <button class="nav-btn" onclick="switchTab('cases', this)"><i class="bi bi-hammer"></i>สำนวนคดี</button>
         <button class="nav-btn" onclick="switchTab('plaintiff', this)"><i class="bi bi-people"></i>คดีโจทก์</button>
         <button class="nav-btn" onclick="switchTab('defendant', this)"><i class="bi bi-person-badge"></i>คดีจำเลย</button>
         <button class="nav-btn" onclick="switchTab('storage', this)"><i class="bi bi-folder2-open"></i>เก็บข้อมูล</button>
+        <button class="nav-btn" onclick="switchTab('report', this)"><i class="bi bi-pie-chart"></i>สรุปรายงาน</button>
       </div>
 
       <div class="content-area">
@@ -69,15 +75,13 @@
         <div id="tab-schedule" class="tab-content">
           <div class="d-flex justify-content-between align-items-center mb-4">
             <h4 class="m-0">ตารางนัดประจำเดือน</h4>
-            <div>
-              <div class="d-flex flex-wrap gap-1">
+            <div class="d-flex flex-wrap gap-1">
               <button class="btn btn-primary btn-sm" onclick="openScheduleModal('วันนัด')">+ เพิ่มวันนัด</button>
               <button class="btn btn-dark btn-sm" onclick="openScheduleModal('วันสืบพยานโจทก์')">+ เพิ่มวันสืบพยานโจทก์</button>
               <button class="btn btn-dark btn-sm" onclick="openScheduleModal('วันสืบพยานจำเลย')">+ เพิ่มวันสืบพยานจำเลย</button>
               <button class="btn btn-dark btn-sm" onclick="openScheduleModal('วันฟังคำพิพากษา')">+ เพิ่มวันฟังคำพิพากษา</button>
               <button class="btn btn-dark btn-sm" onclick="openScheduleModal('วันอุทธรณ์')">+ เพิ่มวันอุทธรณ์</button>
               <button class="btn btn-dark btn-sm" onclick="openScheduleModal('วันฎีกา')">+ เพิ่มวันฎีกา</button>
-            </div>
             </div>
           </div>
           <div class="card p-3 shadow-sm border-0">
@@ -97,23 +101,36 @@
 
         <!-- หมวดสำนวนคดี -->
         <div id="tab-cases" class="tab-content d-none">
-          <h4 class="mb-4">เพิ่มและจัดการสำนวนคดี</h4>
+          <div class="d-flex justify-content-between align-items-center mb-4">
+            <h4 class="m-0">เพิ่มและจัดการสำนวนคดี</h4>
+            <div class="input-group" style="max-width: 320px;">
+              <span class="input-group-text bg-white"><i class="bi bi-search"></i></span>
+              <input type="text" id="caseSearchInput" class="form-control" placeholder="ค้นหาเลขคดีดำ / คดีแดง..." oninput="filterCasesTable(this.value)">
+            </div>
+          </div>
           <div class="card p-4 shadow-sm border-0 mb-4">
             <form id="createCaseForm" class="row g-3">
+              <div class="col-md-3">
+                <label class="form-label small">ประเภทคดี</label>
+                <select id="case_category" class="form-select">
+                  <option value="คดีแพ่ง">คดีแพ่ง</option>
+                  <option value="คดีอาญา">คดีอาญา</option>
+                </select>
+              </div>
               <div class="col-md-3"><label class="form-label small">หมายเลขคดีดำที่</label><input type="text" id="black_num" class="form-control" placeholder="เช่น ผบ. 123/2569"></div>
               <div class="col-md-3"><label class="form-label small">หมายเลขคดีแดงที่</label><input type="text" id="red_num" class="form-control" placeholder="เช่น ผบ. 456/2569"></div>
               <div class="col-md-3"><label class="form-label small">ศาล</label><input type="text" id="court_name" class="form-control" placeholder="เช่น ศาลแพ่ง" required></div>
-              <div class="col-md-3"><label class="form-label small">ทนายความเจ้าของเรื่อง</label><input type="text" id="lawyer_name" class="form-control" placeholder="ชื่อทนาย"></div>
+              <div class="col-md-4"><label class="form-label small">ทนายความเจ้าของเรื่อง</label><input type="text" id="lawyer_name" class="form-control" placeholder="ชื่อทนาย"></div>
               <div class="col-md-4"><label class="form-label small">ข้อกล่าวหา / ฐานความผิด</label><input type="text" id="case_type" class="form-control" placeholder="เช่น ผิดสัญญา"></div>
               <div class="col-md-4"><label class="form-label small">ทุนทรัพย์ (บาท)</label><input type="number" id="claim_amount" class="form-control" placeholder="0.00"></div>
-              <div class="col-md-4 d-flex align-items-end"><button type="submit" class="btn btn-primary w-100">บันทึกสำนวนคดี</button></div>
+              <div class="col-12 text-end"><button type="submit" class="btn btn-primary px-4">บันทึกสำนวนคดี</button></div>
             </form>
           </div>
           <h5>รายการสำนวนคดีทั้งหมด</h5>
           <div class="table-responsive bg-white rounded shadow-sm">
-            <table class="table table-hover mb-0">
+            <table class="table table-hover mb-0 align-middle">
               <thead class="table-light">
-                <tr><th>คดีดำ</th><th>คดีแดง</th><th>ศาล</th><th>ฐานความผิด</th><th>ทนายความ</th><th>ทุนทรัพย์</th><th style="width: 170px;" class="text-center">จัดการ</th></tr>
+                <tr><th>คดีดำ</th><th>คดีแดง</th><th>ศาล</th><th>ประเภท</th><th>ฐานความผิด</th><th>ทนายความ</th><th>ทุนทรัพย์</th><th style="width: 170px;" class="text-center">จัดการ</th></tr>
               </thead>
               <tbody id="caseTableBody"></tbody>
             </table>
@@ -140,6 +157,70 @@
           </div>
           <div class="row g-3" id="docCardContainer"></div>
         </div>
+
+        <!-- หมวดสรุปรายงาน -->
+        <div id="tab-report" class="tab-content d-none">
+          <h4 class="mb-4">สรุปรายงานและค้นหาสำนวนคดี</h4>
+          
+          <!-- การ์ดสรุปจำนวน -->
+          <div class="row g-3 mb-4">
+            <div class="col-md-4">
+              <div class="stat-card crim">
+                <div class="text-muted small fw-bold text-uppercase">คดีอาญา</div>
+                <div class="d-flex justify-content-between align-items-center mt-2">
+                  <h2 class="m-0 fw-bold text-danger" id="countCriminal">0</h2>
+                  <i class="bi bi-shield-slash fs-1 text-danger opacity-50"></i>
+                </div>
+                <div class="text-muted small mt-2">สำนวนคดีอาญาทั้งหมด</div>
+              </div>
+            </div>
+            <div class="col-md-4">
+              <div class="stat-card civil">
+                <div class="text-muted small fw-bold text-uppercase">คดีแพ่ง</div>
+                <div class="d-flex justify-content-between align-items-center mt-2">
+                  <h2 class="m-0 fw-bold text-primary" id="countCivil">0</h2>
+                  <i class="bi bi-bank fs-1 text-primary opacity-50"></i>
+                </div>
+                <div class="text-muted small mt-2">สำนวนคดีแพ่งทั้งหมด</div>
+              </div>
+            </div>
+            <div class="col-md-4">
+              <div class="stat-card client">
+                <div class="text-muted small fw-bold text-uppercase">จำนวนลูกความ</div>
+                <div class="d-flex justify-content-between align-items-center mt-2">
+                  <h2 class="m-0 fw-bold text-success" id="countClients">0</h2>
+                  <i class="bi bi-people fs-1 text-success opacity-50"></i>
+                </div>
+                <div class="text-muted small mt-2">โจทก์ และ จำเลย รวมกัน</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- ช่องค้นหาคดีดำ/แดง -->
+          <div class="card p-4 shadow-sm border-0 mb-4">
+            <h5 class="mb-3"><i class="bi bi-search me-2"></i>ค้นหาคดีด่วน (ค้นหาจากเลขคดีดำ / คดีแดง)</h5>
+            <div class="row g-2">
+              <div class="col-md-9">
+                <input type="text" id="reportSearchInput" class="form-control" placeholder="พิมพ์เลขคดีดำ หรือ เลขคดีแดง ที่ต้องการค้นหา..." oninput="searchCasesInReport(this.value)">
+              </div>
+              <div class="col-md-3">
+                <button class="btn btn-primary w-100" onclick="searchCasesInReport(document.getElementById('reportSearchInput').value)"><i class="bi bi-search me-1"></i>ค้นหา</button>
+              </div>
+            </div>
+          </div>
+
+          <!-- ตารางผลการค้นหา -->
+          <h5 class="mb-3">ผลการค้นหา / สำนวนคดี</h5>
+          <div class="table-responsive bg-white rounded shadow-sm">
+            <table class="table table-hover mb-0 align-middle">
+              <thead class="table-light">
+                <tr><th>คดีดำ</th><th>คดีแดง</th><th>ศาล</th><th>ประเภท</th><th>ฐานความผิด</th><th>ทนายความ</th><th>ทุนทรัพย์</th></tr>
+              </thead>
+              <tbody id="reportSearchResults"></tbody>
+            </table>
+          </div>
+        </div>
+
       </div>
     </div>
   </div>
@@ -158,14 +239,14 @@
             <div class="mb-3">
               <label class="form-label small">ประเภทนัด</label>
               <select id="appoint_type" class="form-select" required>
-              <option value="วันนัด">วันนัด</option>
-              <option value="วันสืบพยานโจทก์">วันสืบพยานโจทก์</option>
-              <option value="วันสืบพยานจำเลย">วันสืบพยานจำเลย</option>
-              <option value="วันฟังคำพิพากษา">วันฟังคำพิพากษา</option>
-              <option value="วันอุทธรณ์">วันอุทธรณ์</option>
-              <option value="วันฎีกา">วันฎีกา</option>
-            </select>
-          </div>
+                <option value="วันนัด">วันนัด</option>
+                <option value="วันสืบพยานโจทก์">วันสืบพยานโจทก์</option>
+                <option value="วันสืบพยานจำเลย">วันสืบพยานจำเลย</option>
+                <option value="วันฟังคำพิพากษา">วันฟังคำพิพากษา</option>
+                <option value="วันอุทธรณ์">วันอุทธรณ์</option>
+                <option value="วันฎีกา">วันฎีกา</option>
+              </select>
+            </div>
             <div class="mb-3">
               <label class="form-label small">วันที่นัดหมาย</label>
               <input type="date" id="appoint_date" class="form-control" required>
@@ -192,6 +273,13 @@
         <div class="modal-body">
           <form id="editCaseForm" class="row g-3">
             <input type="hidden" id="edit_case_id">
+            <div class="col-md-12">
+              <label class="form-label small">ประเภทคดี</label>
+              <select id="edit_case_category" class="form-select form-select-sm">
+                <option value="คดีแพ่ง">คดีแพ่ง</option>
+                <option value="คดีอาญา">คดีอาญา</option>
+              </select>
+            </div>
             <div class="col-md-6"><label class="form-label small">หมายเลขคดีดำที่</label><input type="text" id="edit_black_num" class="form-control form-control-sm"></div>
             <div class="col-md-6"><label class="form-label small">หมายเลขคดีแดงที่</label><input type="text" id="edit_red_num" class="form-control form-control-sm"></div>
             <div class="col-md-6"><label class="form-label small">ศาล</label><input type="text" id="edit_court_name" class="form-control form-control-sm" required></div>
@@ -232,7 +320,7 @@
     </div>
   </div>
 
-  <!-- Modal ยืนยันการลบ (ใช้ร่วมกันทุกหมวด) -->
+  <!-- Modal ยืนยันการลบ -->
   <div class="modal fade" id="deleteModal" tabindex="-1">
     <div class="modal-dialog modal-sm">
       <div class="modal-content">
@@ -258,7 +346,6 @@
     let caseDataList = [];
     let clientDataList = [];
     
-    // ตัวแปรเก็บ ID สำหรับลบ
     let deleteTargetId = null;
     let deleteCaseTargetId = null;
     let deleteClientTargetId = null;
@@ -332,6 +419,9 @@
       } else if (tab === 'storage') {
         document.getElementById('tab-storage').classList.remove('d-none');
         loadDocuments();
+      } else if (tab === 'report') {
+        document.getElementById('tab-report').classList.remove('d-none');
+        loadReports();
       }
     }
 
@@ -376,9 +466,7 @@
         tbody.innerHTML = scheduleDataList.map(d => `
           <tr>
             <td class="fw-bold">${d.appoint_date}</td>
-            <td>
-            <span class="badge ${d.appoint_type === 'วันนัด' ? 'bg-primary' : 'bg-dark'}">${d.appoint_type}</span>
-            </td>
+            <td><span class="badge ${d.appoint_type === 'วันนัด' ? 'bg-primary' : 'bg-dark'}">${d.appoint_type}</span></td>
             <td class="text-start">${d.title}</td>
             <td>
               <button class="btn btn-outline-warning btn-sm me-1" onclick="editSchedule(${d.id})"><i class="bi bi-pencil-square"></i> แก้ไข</button>
@@ -414,10 +502,50 @@
     };
 
     // --- Cases Logic ---
+    function renderCasesTable(data) {
+      const tbody = document.getElementById('caseTableBody');
+      if (!data || data.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="8" class="text-center text-muted p-4">ไม่พบรายการสำนวนคดี</td></tr>';
+        return;
+      }
+
+      tbody.innerHTML = data.map(c => `
+        <tr>
+          <td><span class="text-dark fw-bold">${c.black_number || '-'}</span></td>
+          <td><span class="text-danger fw-bold">${c.red_number || '-'}</span></td>
+          <td>${c.court_name}</td>
+          <td><span class="badge ${c.category === 'คดีอาญา' ? 'bg-danger' : 'bg-primary'}">${c.category || 'คดีแพ่ง'}</span></td>
+          <td>${c.case_type || '-'}</td>
+          <td>${c.lawyer_name || '-'}</td>
+          <td>${Number(c.claim_amount || 0).toLocaleString()} ฿</td>
+          <td class="text-center">
+            <button class="btn btn-outline-warning btn-sm py-0 px-2 me-1" onclick="editCase(${c.id})"><i class="bi bi-pencil-square"></i> แก้ไข</button>
+            <button class="btn btn-outline-danger btn-sm py-0 px-2" onclick="triggerDeleteCase(${c.id})"><i class="bi bi-trash"></i> ลบ</button>
+          </td>
+        </tr>
+      `).join('');
+    }
+
+    function filterCasesTable(keyword) {
+      const kw = keyword.toLowerCase().trim();
+      if (!kw) {
+        renderCasesTable(caseDataList);
+        return;
+      }
+      const filtered = caseDataList.filter(c => 
+        (c.black_number && c.black_number.toLowerCase().includes(kw)) ||
+        (c.red_number && c.red_number.toLowerCase().includes(kw)) ||
+        (c.court_name && c.court_name.toLowerCase().includes(kw)) ||
+        (c.lawyer_name && c.lawyer_name.toLowerCase().includes(kw))
+      );
+      renderCasesTable(filtered);
+    }
+
     function editCase(id) {
       const item = caseDataList.find(c => c.id === id);
       if (!item) return;
       document.getElementById('edit_case_id').value = item.id;
+      document.getElementById('edit_case_category').value = item.category || 'คดีแพ่ง';
       document.getElementById('edit_black_num').value = item.black_number || '';
       document.getElementById('edit_red_num').value = item.red_number || '';
       document.getElementById('edit_court_name').value = item.court_name || '';
@@ -431,6 +559,7 @@
       e.preventDefault();
       const id = document.getElementById('edit_case_id').value;
       const payload = {
+        category: document.getElementById('edit_case_category').value,
         black_number: document.getElementById('edit_black_num').value,
         red_number: document.getElementById('edit_red_num').value,
         court_name: document.getElementById('edit_court_name').value,
@@ -460,27 +589,7 @@
       try {
         const res = await fetch('/api/cases');
         caseDataList = await res.json();
-        const tbody = document.getElementById('caseTableBody');
-
-        if (!caseDataList || caseDataList.length === 0) {
-          tbody.innerHTML = '<tr><td colspan="7" class="text-center text-muted p-4">ยังไม่มีรายการสำนวนคดี</td></tr>';
-          return;
-        }
-
-        tbody.innerHTML = caseDataList.map(c => `
-          <tr>
-            <td><span class="text-dark fw-bold">${c.black_number || '-'}</span></td>
-            <td><span class="text-danger fw-bold">${c.red_number || '-'}</span></td>
-            <td>${c.court_name}</td>
-            <td>${c.case_type || '-'}</td>
-            <td>${c.lawyer_name || '-'}</td>
-            <td>${Number(c.claim_amount || 0).toLocaleString()} ฿</td>
-            <td class="text-center">
-              <button class="btn btn-outline-warning btn-sm py-0 px-2 me-1" onclick="editCase(${c.id})"><i class="bi bi-pencil-square"></i> แก้ไข</button>
-              <button class="btn btn-outline-danger btn-sm py-0 px-2" onclick="triggerDeleteCase(${c.id})"><i class="bi bi-trash"></i> ลบ</button>
-            </td>
-          </tr>
-        `).join('');
+        renderCasesTable(caseDataList);
       } catch (err) {
         console.error('Load Cases Error:', err);
       }
@@ -492,6 +601,7 @@
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
+          category: document.getElementById('case_category').value,
           black_number: document.getElementById('black_num').value,
           red_number: document.getElementById('red_num').value,
           court_name: document.getElementById('court_name').value,
@@ -631,6 +741,68 @@
       await fetch('/api/documents', { method: 'POST', body: formData });
       input.value = '';
       loadDocuments();
+    }
+
+    // --- Report & Search Logic ---
+    async function loadReports() {
+      try {
+        const [resCases, resClients] = await Promise.all([
+          fetch('/api/cases'),
+          fetch('/api/clients')
+        ]);
+        const cases = await resCases.json();
+        const clients = await resClients.json();
+        caseDataList = cases;
+
+        let crimCount = 0;
+        let civilCount = 0;
+
+        cases.forEach(c => {
+          if (c.category === 'คดีอาญา') crimCount++;
+          else civilCount++;
+        });
+
+        document.getElementById('countCriminal').innerText = `${crimCount} คดี`;
+        document.getElementById('countCivil').innerText = `${civilCount} คดี`;
+        document.getElementById('countClients').innerText = `${clients.length} คน`;
+
+        renderReportTable(cases);
+      } catch (err) {
+        console.error('Load Reports Error:', err);
+      }
+    }
+
+    function searchCasesInReport(keyword) {
+      const kw = keyword.toLowerCase().trim();
+      if (!kw) {
+        renderReportTable(caseDataList);
+        return;
+      }
+      const filtered = caseDataList.filter(c => 
+        (c.black_number && c.black_number.toLowerCase().includes(kw)) ||
+        (c.red_number && c.red_number.toLowerCase().includes(kw)) ||
+        (c.court_name && c.court_name.toLowerCase().includes(kw))
+      );
+      renderReportTable(filtered);
+    }
+
+    function renderReportTable(data) {
+      const tbody = document.getElementById('reportSearchResults');
+      if (!data || data.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="7" class="text-center text-muted p-4">ไม่พบคดีที่ตรงกับคำค้นหา</td></tr>';
+        return;
+      }
+      tbody.innerHTML = data.map(c => `
+        <tr>
+          <td><span class="text-dark fw-bold">${c.black_number || '-'}</span></td>
+          <td><span class="text-danger fw-bold">${c.red_number || '-'}</span></td>
+          <td>${c.court_name}</td>
+          <td><span class="badge ${c.category === 'คดีอาญา' ? 'bg-danger' : 'bg-primary'}">${c.category || 'คดีแพ่ง'}</span></td>
+          <td>${c.case_type || '-'}</td>
+          <td>${c.lawyer_name || '-'}</td>
+          <td>${Number(c.claim_amount || 0).toLocaleString()} ฿</td>
+        </tr>
+      `).join('');
     }
 
     // --- รวมคำสั่งลบผ่าน Modal ยืนยันเดียว ป้องกันบั๊ก ---
